@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <title>Multi‑Language Translator</title>
@@ -15,25 +14,17 @@
             align-items: center;
             min-height: 100vh;
         }
-
         .container {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(8px);
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
             padding: 2rem;
-            max-width: 600px;
+            max-width: 800px;
             width: 100%;
         }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 1rem;
-            color: #2c3e50;
-        }
-
-        textarea,
-        input {
+        h1 { text-align: center; margin-bottom: 1rem; color: #2c3e50; }
+        textarea, input[type=text] {
             width: 100%;
             padding: .6rem;
             margin-top: .5rem;
@@ -42,7 +33,6 @@
             font-size: 1rem;
             resize: vertical;
         }
-
         button {
             margin-top: 1rem;
             width: 100%;
@@ -55,89 +45,95 @@
             cursor: pointer;
             transition: background .2s;
         }
-
-        button:hover {
-            background: #357ABD;
+        button:hover { background: #357ABD; }
+        .languages {
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: .5rem;
         }
-
-        .result {
-            margin-top: 1.5rem;
-        }
-
-        .lang-item {
-            padding: .4rem 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .lang-item:last-child {
-            border-bottom: none;
-        }
-
-        .error {
-            color: #e74c3c;
-        }
+        .lang-item { display: flex; align-items: center; font-size: .95rem; }
+        .lang-item input { margin-right: .3rem; }
+        .result { margin-top: 1.5rem; }
+        .result ul { list-style: none; padding: 0; }
+        .result li { padding: .4rem 0; border-bottom: 1px solid #e2e8f0; }
+        .result li:last-child { border-bottom: none; }
+        .error { color: #e74c3c; }
     </style>
 </head>
-
 <body>
     <div class="container">
         <h1>🌐 Multi‑Language Translator</h1>
-
         <label for="source">Source language code (optional, defaults to auto‑detect)</label>
         <input type="text" id="source" placeholder="e.g., en, es, hi">
-
         <label for="text">Text to translate</label>
         <textarea id="text" rows="4" placeholder="Enter text here..."></textarea>
-
+        <div class="languages" id="languageOptions">
+            <label class="lang-item"><input type="checkbox" data-name="Spanish" data-code="es">Spanish</label>
+            <label class="lang-item"><input type="checkbox" data-name="French" data-code="fr">French</label>
+            <label class="lang-item"><input type="checkbox" data-name="German" data-code="de">German</label>
+            <label class="lang-item"><input type="checkbox" data-name="Hindi" data-code="hi">Hindi</label>
+            <label class="lang-item"><input type="checkbox" data-name="Chinese" data-code="zh-CN">Chinese</label>
+            <label class="lang-item"><input type="checkbox" data-name="Japanese" data-code="ja">Japanese</label>
+            <label class="lang-item"><input type="checkbox" data-name="Arabic" data-code="ar">Arabic</label>
+            <label class="lang-item"><input type="checkbox" data-name="Portuguese" data-code="pt">Portuguese</label>
+            <label class="lang-item"><input type="checkbox" data-name="Russian" data-code="ru">Russian</label>
+            <label class="lang-item"><input type="checkbox" data-name="Korean" data-code="ko">Korean</label>
+            <label class="lang-item"><input type="checkbox" data-name="Italian" data-code="it">Italian</label>
+            <label class="lang-item"><input type="checkbox" data-name="Turkish" data-code="tr">Turkish</label>
+        </div>
         <button id="translateBtn">Translate</button>
-
         <div class="result" id="result"></div>
     </div>
-
     <script>
         const btn = document.getElementById('translateBtn');
         const textEl = document.getElementById('text');
         const sourceEl = document.getElementById('source');
         const resultEl = document.getElementById('result');
-
+        const languageOptions = document.getElementById('languageOptions');
         btn.addEventListener('click', async () => {
             const payload = {
                 text: textEl.value.trim(),
                 source: sourceEl.value.trim() || 'auto'
             };
-
+            // Gather selected languages
+            const selected = [];
+            languageOptions.querySelectorAll('input[type=checkbox]:checked').forEach(cb => {
+                const name = cb.dataset.name;
+                const code = cb.dataset.code;
+                if (name && code) selected.push({ name, code });
+            });
+            if (selected.length > 0) {
+                payload.targets = {};
+                selected.forEach(item => payload.targets[item.name] = item.code);
+            }
             if (!payload.text) {
                 resultEl.innerHTML = '<p class="error">Please enter some text.</p>';
                 return;
             }
-
             try {
                 const resp = await fetch('/translate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-
                 const data = await resp.json();
-
                 if (data.error) {
                     resultEl.innerHTML = `<p class="error">${data.error}</p>`;
                     return;
                 }
-
                 const { translations } = data;
                 let html = '<h3>Translations:</h3><ul>';
                 for (const [lang, msg] of Object.entries(translations)) {
-                    html += `<li class="lang-item"><strong>${lang}:</strong> ${msg}</li>`;
+                    html += `<li><strong>${lang}:</strong> ${msg}</li>`;
                 }
                 html += '</ul>';
                 resultEl.innerHTML = html;
             } catch (e) {
-                resultEl.innerHTML = `<p class="error">Failed to fetch translations.</p>`;
+                resultEl.innerHTML = '<p class="error">Failed to fetch translations.</p>';
                 console.error(e);
             }
         });
     </script>
 </body>
-
 </html>

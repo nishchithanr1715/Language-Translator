@@ -6,7 +6,7 @@ app = Flask(__name__, static_folder='')
 
 # Default target languages
 DEFAULT_TARGETS = {
-    "Spanish": "es",
+    "Spanish": "es", 
     "French": "fr",
     "German": "de",
     "Hindi": "hi",
