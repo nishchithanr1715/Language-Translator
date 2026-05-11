@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Multi‑Language Translator</title>
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #f0f4ff, #e6eaff);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            padding: 2rem;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        textarea,
+        input {
+            width: 100%;
+            padding: .6rem;
+            margin-top: .5rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            resize: vertical;
+        }
+
+        button {
+            margin-top: 1rem;
+            width: 100%;
+            padding: .8rem;
+            background: #4a90e2;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+        button:hover {
+            background: #357ABD;
+        }
+
+        .result {
+            margin-top: 1.5rem;
+        }
+
+        .lang-item {
+            padding: .4rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .lang-item:last-child {
+            border-bottom: none;
+        }
+
+        .error {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🌐 Multi‑Language Translator</h1>
+
+        <label for="source">Source language code (optional, defaults to auto‑detect)</label>
+        <input type="text" id="source" placeholder="e.g., en, es, hi">
+
+        <label for="text">Text to translate</label>
+        <textarea id="text" rows="4" placeholder="Enter text here..."></textarea>
+
+        <button id="translateBtn">Translate</button>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('translateBtn');
+        const textEl = document.getElementById('text');
+        const sourceEl = document.getElementById('source');
+        const resultEl = document.getElementById('result');
+
+        btn.addEventListener('click', async () => {
+            const payload = {
+                text: textEl.value.trim(),
+                source: sourceEl.value.trim() || 'auto'
+            };
+
+            if (!payload.text) {
+                resultEl.innerHTML = '<p class="error">Please enter some text.</p>';
+                return;
+            }
+
+            try {
+                const resp = await fetch('/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await resp.json();
+
+                if (data.error) {
+                    resultEl.innerHTML = `<p class="error">${data.error}</p>`;
+                    return;
+                }
+
+                const { translations } = data;
+                let html = '<h3>Translations:</h3><ul>';
+                for (const [lang, msg] of Object.entries(translations)) {
+                    html += `<li class="lang-item"><strong>${lang}:</strong> ${msg}</li>`;
+                }
+                html += '</ul>';
+                resultEl.innerHTML = html;
+            } catch (e) {
+                resultEl.innerHTML = `<p class="error">Failed to fetch translations.</p>`;
+                console.error(e);
+            }
+        });
+    </script>
+</body>
+
+</html>
